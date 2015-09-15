@@ -1,3 +1,5 @@
+package test.main;
+
 import junit.framework.Assert;
 import junit.framework.TestCase;
 import main.HelloWorld;
