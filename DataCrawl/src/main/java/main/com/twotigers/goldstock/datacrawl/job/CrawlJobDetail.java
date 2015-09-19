@@ -1,7 +1,7 @@
 package main.com.twotigers.goldstock.datacrawl.job;
 
 import main.com.twotigers.goldstock.datacrawl.framework.BaseCrawlTask;
-import main.com.twotigers.goldstock.datacrawl.task.StockCodeCrawlTask;
+import main.com.twotigers.goldstock.datacrawl.task.stockcode.StockCodeCrawlTask;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;

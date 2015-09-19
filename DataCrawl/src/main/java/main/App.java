@@ -1,8 +1,12 @@
 package main;
 
+import main.com.twotigers.goldstock.datacrawl.common.MongoDbConfigTool;
 import main.com.twotigers.goldstock.datacrawl.job.CrawlJobDetail;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
+
+import java.io.IOException;
+import java.util.TimeZone;
 
 import static org.quartz.TriggerBuilder.newTrigger;
 
@@ -19,21 +23,23 @@ public class App {
     private static Scheduler sched = null;
     public static void main( String[] args ) {
         try {
-            try {
-                sched = initSchedule();
-                Thread.sleep(1000);
-            }
-            catch (Exception e) {
-                //调度器停止运行
-                if (sched!=null) {
-                    sched.shutdown(true);
-                }
-            }
-            System.out.println("程序正在运行...");
-
-        } catch (SchedulerException e) {
+            TimeZone.setDefault(TimeZone.getTimeZone("GMT+8"));
+            doPrepare();
+            sched = initSchedule();
+            Thread.sleep(1000);
+//            //调度器停止运行
+//            if (sched!=null) {
+//                sched.shutdown(true);
+//            }
+        }
+        catch (Exception e) {
             e.printStackTrace();
         }
+        System.out.println("程序正在运行...");
+    }
+
+    private static void doPrepare() throws IOException {
+        MongoDbConfigTool.initMongoDbConfig();
     }
 
     private static Scheduler initSchedule() throws SchedulerException {
