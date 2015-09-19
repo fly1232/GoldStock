@@ -9,6 +9,7 @@ import com.mongodb.MongoClient;
 import main.com.twotigers.goldstock.datacrawl.common.Constants;
 import main.com.twotigers.goldstock.datacrawl.connect.XueqiuConnector;
 import main.com.twotigers.goldstock.datacrawl.framework.BaseCrawlTask;
+import main.com.twotigers.goldstock.datacrawl.framework.TaskException;
 import main.com.twotigers.goldstock.datacrawl.utils.DateUtity;
 import main.com.twotigers.goldstock.datacrawl.utils.DbUtity;
 import org.apache.commons.logging.Log;
@@ -36,15 +37,14 @@ public class StockCodeCrawlTask extends BaseCrawlTask {
     private final static String CRON_EXPR = "/5 * * ? * *";
 
     @Override
-    public void run() {
+    protected void process() throws TaskException {
         try {
-            logger.info("股票代码正在抓取...");
             for (String marketName : Constants.MARKET_NAME_ARR) {
                 procMarket(marketName);
             }
-            logger.info("股票代码抓取完毕.");
-        } catch (Exception e) {
-            logger.error("运行任务时发生错误，原因是" + e.getMessage(), e);
+        }
+        catch (Exception ex){
+            throw new TaskException(ex);
         }
     }
 
@@ -108,7 +108,7 @@ public class StockCodeCrawlTask extends BaseCrawlTask {
             };
 
             MongoClient mongoClient = DbUtity.createMongoClient();
-            DbUtity.insertDbObjects(mongoClient, Constants.TABLE_NAME_STOCKCODE, dbObjects);
+            DbUtity.insertDbObjects(mongoClient, Constants.TABLE_NAME_STOCK_CODE, dbObjects);
             mongoClient.close();
             logger.info(String.format("完成解析第%d页数据并写入数据库.", pageNum));
         }
@@ -119,10 +119,10 @@ public class StockCodeCrawlTask extends BaseCrawlTask {
         try {
             mongoClient = DbUtity.createMongoClient();
             DbUtity.createIndexForTable(mongoClient,
-                    Constants.TABLE_NAME_STOCKCODE,
+                    Constants.TABLE_NAME_STOCK_CODE,
                     new BasicDBObject("market", 1));
             return DbUtity.getRowCountOfTable(mongoClient,
-                    Constants.TABLE_NAME_STOCKCODE,
+                    Constants.TABLE_NAME_STOCK_CODE,
                     new BasicDBObject("market", marketName));
         }
         finally {

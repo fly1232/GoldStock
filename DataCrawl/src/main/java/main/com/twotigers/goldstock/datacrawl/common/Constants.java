@@ -12,7 +12,7 @@ public class Constants {
     /**
      * 表名：股票代码
      */
-    public final static String TABLE_NAME_STOCKCODE = "stockcode";
+    public final static String TABLE_NAME_STOCK_CODE = "stock_code";
 
     /**
      * 上海股票市场
