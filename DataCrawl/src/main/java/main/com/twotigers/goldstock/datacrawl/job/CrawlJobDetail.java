@@ -2,6 +2,7 @@ package main.com.twotigers.goldstock.datacrawl.job;
 
 import main.com.twotigers.goldstock.datacrawl.framework.BaseCrawlTask;
 import main.com.twotigers.goldstock.datacrawl.task.stockcode.StockCodeCrawlTask;
+import main.com.twotigers.goldstock.datacrawl.task.stockquote.StockQuoteCrawlTask;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -21,15 +22,13 @@ public final class CrawlJobDetail implements Job {
 
     public CrawlJobDetail(){
         tasks.add(new StockCodeCrawlTask());
+        tasks.add(new StockQuoteCrawlTask());
     }
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-        tasks.forEach(new Consumer<BaseCrawlTask>() {
-            @Override
-            public void accept(BaseCrawlTask baseCrawlTask) {
-                baseCrawlTask.run();
-            }
-        });
+        for (BaseCrawlTask task : tasks){
+            task.run();
+        }
     }
 }
