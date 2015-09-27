@@ -6,12 +6,12 @@ package main.com.twotigers.goldstock.datacrawl.common;
 public final class MongoDbConfig {
 
     /**
-     * 服务端ip
+     * mongodb server ip
      */
     private String serverIp;
 
     /**
-     * 服务端端口
+     * mongodb port
      */
     private int serverPort;
 

@@ -17,7 +17,7 @@ public class Constants {
     /**
      * 表名：股票行情
      */
-    public final static String TABLE_NAME_STOCK_QUITE = "stock_quote";
+    public final static String TABLE_NAME_DAY_QUITE = "day_quote";
 
     /**
      * 上海股票市场

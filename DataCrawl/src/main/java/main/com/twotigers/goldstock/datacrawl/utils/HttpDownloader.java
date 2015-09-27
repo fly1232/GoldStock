@@ -31,7 +31,14 @@ public class HttpDownloader {
 
         InputStream in = urlConnection.getInputStream();
         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-        String lineStr = null;
+        while (!reader.ready()){
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        String lineStr;
         boolean isFirstLine = true;
         while ((lineStr = reader.readLine())!=null) {
             lineProc.proc(lineStr, isFirstLine);

@@ -8,8 +8,8 @@ import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import main.com.twotigers.goldstock.datacrawl.common.Constants;
 import main.com.twotigers.goldstock.datacrawl.connect.XueqiuConnector;
-import main.com.twotigers.goldstock.datacrawl.framework.BaseCrawlTask;
-import main.com.twotigers.goldstock.datacrawl.framework.TaskException;
+import main.com.twotigers.goldstock.datacrawl.common.BaseCrawlTask;
+import main.com.twotigers.goldstock.datacrawl.common.TaskException;
 import main.com.twotigers.goldstock.datacrawl.utils.DateUtity;
 import main.com.twotigers.goldstock.datacrawl.utils.DbUtity;
 import org.apache.commons.logging.Log;
@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.text.ParseException;
 import java.util.*;
-import java.util.function.Consumer;
 
 /**
  * Created by Administrator on 2015/9/13.
@@ -50,7 +49,7 @@ public class StockCodeCrawlTask extends BaseCrawlTask {
 
     @Override
     public String getTaskName() {
-        return "股票代码抓取";
+        return "stock code crawl";
     }
 
     @Override
@@ -64,12 +63,12 @@ public class StockCodeCrawlTask extends BaseCrawlTask {
         long countInMongo = getCountOfMongo(marketName);
         long countFromWeb = getCountFromWeb(marketName);
         if (countFromWeb == countInMongo) {
-            logger.info(String.format("市场：%s 没有更新，无需抓取.", marketName));
+            logger.info(String.format("None of stock code is refreshed in market：%s, and nothing will be done.", marketName));
         }
         else {
-            logger.info(String.format("市场：%s 发现最新数据，即将抓取...", marketName));
+            logger.info(String.format("Newer stock codes found in market: %s, and the stock code crawling task is beginning...", marketName));
             fetchDataFromWeb(marketName, countFromWeb - countInMongo);
-            logger.info(String.format("市场：%s 抓取完毕.", marketName));
+            logger.info(String.format("merket：%s, stock code crawling is finished.", marketName));
         }
     }
     private void fetchDataFromWeb(String marketName, long fetchCount ) throws IOException, ParseException {
@@ -77,9 +76,9 @@ public class StockCodeCrawlTask extends BaseCrawlTask {
 
         int pageSize = 90;
         int pageCount = (int) Math.ceil( fetchCount * 1.0 / pageSize );
-        logger.info(String.format("共需抓取%d条记录，以%d条为一页，共需下载%d个页面.", fetchCount, pageSize, pageCount));
+        logger.info(String.format("Found %d records，make %d row as one page， so need to download %d pages.", fetchCount, pageSize, pageCount));
         for (int pageNum = 1; pageNum <= pageCount; pageNum++) {
-            logger.info(String.format("正在下载第%d页...", pageNum));
+            logger.info(String.format("The %d page is downloading...", pageNum));
             String requestUrl = "http://xueqiu.com/proipo/query.json";
             Map<String, String> paramaters = new HashMap<String, String>();
             paramaters.put("page", String.valueOf(pageNum));
@@ -90,9 +89,9 @@ public class StockCodeCrawlTask extends BaseCrawlTask {
             paramaters.put("type", "quote");
             paramaters.put("stockType", marketName);
             String jsonStr = XueqiuConnector.sendGet(requestUrl, paramaters, null);
-            logger.info(String.format("第%d页下载完成.", pageNum));
+            logger.info(String.format("The %d page is finished download.", pageNum));
 
-            logger.info(String.format("解析第%d页数据，并写入数据库...", pageNum));
+            logger.info(String.format("The %d page is analysing, and will be written into the database...", pageNum));
             JSONObject jsonObject = JSON.parseObject(jsonStr);
             JSONArray jsonArray = jsonObject.getJSONArray("data");
             List<DBObject> dbObjects = new ArrayList<>(jsonArray.size());
@@ -110,7 +109,7 @@ public class StockCodeCrawlTask extends BaseCrawlTask {
             MongoClient mongoClient = DbUtity.createMongoClient();
             DbUtity.insertDbObjects(mongoClient, Constants.TABLE_NAME_STOCK_CODE, dbObjects);
             mongoClient.close();
-            logger.info(String.format("完成解析第%d页数据并写入数据库.", pageNum));
+            logger.info(String.format("The %d page is analysis and written into the database.", pageNum));
         }
     }
 

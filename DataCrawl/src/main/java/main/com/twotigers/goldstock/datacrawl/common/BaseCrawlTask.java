@@ -1,4 +1,4 @@
-package main.com.twotigers.goldstock.datacrawl.framework;
+package main.com.twotigers.goldstock.datacrawl.common;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -16,13 +16,13 @@ public abstract class BaseCrawlTask {
      */
     public void run(){
         try {
-            logger.info(String.format("任务[%s]正在开始...", getTaskName()));
+            logger.info(String.format("Task:[%s] is beginning...", getTaskName()));
             long startTime = System.currentTimeMillis();
             process();
             long hastTime = System.currentTimeMillis() - startTime;
-            logger.info(String.format("任务[%s]已经完成，消耗时间%d毫秒", getTaskName(), hastTime));
+            logger.info(String.format("Task:[%s] is finished，and hasted %d ms", getTaskName(), hastTime));
         } catch (Exception e) {
-            logger.error("运行任务时发生错误，原因是" + e.getMessage(), e);
+            logger.error("A error occured when running, the detail cause is :" + e.getMessage(), e);
         }
     }
 

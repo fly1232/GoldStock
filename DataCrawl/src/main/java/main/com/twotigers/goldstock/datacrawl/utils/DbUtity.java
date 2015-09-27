@@ -113,7 +113,7 @@ public class DbUtity {
      * @param tableName
      * @return
      */
-    public static <T> T getMaxMinFieldValuesOfTable(MongoClient mongoClient, String tableName, DBObject queryObj, String fieldName, boolean isMax) {
+    public static <T> T getMaxMinFieldValueOfTable(MongoClient mongoClient, String tableName, DBObject queryObj, String fieldName, boolean isMax) {
         DB db = mongoClient.getDB(Constants.DATABASE_NAME);
         if (db != null){
             DBCollection table = db.getCollection(tableName);
@@ -123,6 +123,27 @@ public class DbUtity {
                 try {
                     dbCursor = table.find(queryObj)
                             .sort(new BasicDBObject(fieldName, isMax ? -1 : 1));
+                    if (dbCursor.hasNext()) {
+                        return (T) dbCursor.next().get(fieldName);
+                    }
+                }
+                finally {
+                    if (dbCursor != null) dbCursor.close();
+                }
+            }
+        }
+        return null;
+    }
+
+    public static <T> T getFieldValueOfTable(MongoClient mongoClient, String tableName, DBObject queryObj, String fieldName) {
+        DB db = mongoClient.getDB(Constants.DATABASE_NAME);
+        if (db != null){
+            DBCollection table = db.getCollection(tableName);
+            if (table!=null){
+                List<T> list = new ArrayList<>();
+                DBCursor dbCursor = null;
+                try {
+                    dbCursor = table.find(queryObj);
                     if (dbCursor.hasNext()) {
                         return (T) dbCursor.next().get(fieldName);
                     }

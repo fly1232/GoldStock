@@ -1,4 +1,4 @@
-package main.com.twotigers.goldstock.datacrawl.framework;
+package main.com.twotigers.goldstock.datacrawl.common;
 
 /**
  * Created by Administrator on 2015/9/19.

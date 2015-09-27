@@ -9,7 +9,7 @@ import java.util.Properties;
 
 /**
  * Created by Administrator on 2015/9/15.
- * MongodbConfig读取器
+ * MongodbConfig reader tool
  */
 public class MongoDbConfigTool {
 

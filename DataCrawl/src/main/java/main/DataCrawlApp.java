@@ -2,6 +2,7 @@ package main;
 
 import main.com.twotigers.goldstock.datacrawl.common.MongoDbConfigTool;
 import main.com.twotigers.goldstock.datacrawl.job.CrawlJobDetail;
+import org.apache.log4j.PropertyConfigurator;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 
@@ -15,10 +16,10 @@ import static org.quartz.TriggerBuilder.newTrigger;
  * Created by xuyufei on 2015/9/12.
  * develop
  */
-public class App {
+public class DataCrawlApp {
     /**
-     * 程序主方法
-     * @param args 主函数参数，目前暂未使用
+     * program entry
+     * @param args
      */
     private static Scheduler sched = null;
     public static void main( String[] args ) {
@@ -35,7 +36,7 @@ public class App {
         catch (Exception e) {
             e.printStackTrace();
         }
-        System.out.println("程序正在运行...");
+        System.out.println("The program is running...");
     }
 
     private static void doPrepare() throws IOException {
@@ -48,7 +49,7 @@ public class App {
         Scheduler sched = sf.getScheduler();
         //创建任务
         JobDetail dailyJob = JobBuilder.newJob(CrawlJobDetail.class)
-                .withIdentity("定时抓取任务")
+                .withIdentity("timing crawl job")
                 .build();
         //创建触发器, 定时触发
         SimpleScheduleBuilder simpleScheduleBuilder = SimpleScheduleBuilder
@@ -61,9 +62,9 @@ public class App {
                 .withSchedule(simpleScheduleBuilder)
                 .build();
 
-        //注册调度任务
+        //register job
         sched.scheduleJob(dailyJob, trigger);
-        //启动任务调度
+        //start job
         sched.start();
 
         return sched;

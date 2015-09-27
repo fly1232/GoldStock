@@ -1,24 +1,23 @@
 package main.com.twotigers.goldstock.datacrawl.task.stockquote;
 
-import com.alibaba.fastjson.JSONArray;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import main.com.twotigers.goldstock.datacrawl.cache.StockCodeCache;
 import main.com.twotigers.goldstock.datacrawl.common.Constants;
-import main.com.twotigers.goldstock.datacrawl.framework.BaseCrawlTask;
-import main.com.twotigers.goldstock.datacrawl.framework.TaskException;
+import main.com.twotigers.goldstock.datacrawl.common.BaseCrawlTask;
+import main.com.twotigers.goldstock.datacrawl.common.TaskException;
+import main.com.twotigers.goldstock.datacrawl.utils.DateUtity;
 import main.com.twotigers.goldstock.datacrawl.utils.DbUtity;
-import main.com.twotigers.goldstock.datacrawl.utils.HttpDownloader;
-import main.com.twotigers.goldstock.datacrawl.utils.StringUtity;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.quartz.SimpleTrigger;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by Administrator on 2015/9/19.
@@ -33,53 +32,54 @@ public class StockQuoteCrawlTask extends BaseCrawlTask {
         try {
             List<String> stockCodes = StockCodeCache.getStockCodes();
             int len = stockCodes.size();
-            int index = 0;
+            BlockingQueue<Runnable> secuCodeQueue = new LinkedBlockingQueue<Runnable>(100);
+            ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(10, 10, 60, TimeUnit.SECONDS, secuCodeQueue);
+            threadPoolExecutor.setRejectedExecutionHandler(new RejectedExecutionHandler() {
+                @Override
+                public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+                    logger.info("SecuCode Rejected : " + ((StockQuoteCrawlUnitTask) r).getStockCode());
+                    try {
+                        boolean bEnter = false;
+                        while (!bEnter) {
+                            logger.info("Waiting for 3000 ms !!");
+                            Thread.sleep(3000);
+                            bEnter = secuCodeQueue.offer(r);
+                        }
+                        logger.info("SecuCode accepted : " + ((StockQuoteCrawlUnitTask) r).getStockCode());
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+            //Let start all core threads initially
+            threadPoolExecutor.prestartAllCoreThreads();
+
+            AtomicInteger rowIndex = new AtomicInteger(0);
+            int stockCount = stockCodes.size();
             for (String stockCode: stockCodes) {
-                logger.info(String.format("抓取股票行情: %d/%d, %s...", ++index, len, stockCode));
-                fetchQuoteForEachStock(stockCode);
-                logger.info(String.format("抓取股票行情: %s ...执行完毕.", stockCode));
+                StockQuoteCrawlUnitTask unitTask = new StockQuoteCrawlUnitTask(stockCode);
+                unitTask.setRowIndex(rowIndex);
+                unitTask.setStockCount(stockCount);
+                threadPoolExecutor.execute(unitTask);
             }
+
+            while (threadPoolExecutor.getActiveCount()> 0 ){
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            threadPoolExecutor.shutdown();
         }
         catch (Exception ex){
             throw new TaskException(ex);
         }
     }
 
-    private void fetchQuoteForEachStock(String stockCode) throws IOException {
-        String maxDate = getMaxDateOfStock(stockCode);
-        List<DBObject> insertObjs = StockQuoteDownloader.getQuoteObjs(stockCode, maxDate);
-        if (!insertObjs.isEmpty()) {
-            MongoClient mongoClient = DbUtity.createMongoClient();
-            DbUtity.insertDbObjects(mongoClient, Constants.TABLE_NAME_STOCK_QUITE, insertObjs);
-            mongoClient.close();
-        }
-    }
-
-    /**
-     *  获取行情表中，某个股票的最大日期
-     * @param stockCode
-     * @return
-     * @throws UnknownHostException
-     */
-    private String getMaxDateOfStock(String stockCode) throws UnknownHostException {
-        MongoClient mongoClient = null;
-        try {
-            mongoClient = DbUtity.createMongoClient();
-            return (String)DbUtity.getMaxMinFieldValuesOfTable( mongoClient,
-                                Constants.TABLE_NAME_STOCK_QUITE,
-                                new BasicDBObject("symbol", stockCode),
-                                "date",
-                                true );
-        }
-        finally {
-            if (mongoClient != null)
-                mongoClient.close();
-        }
-    }
-
     @Override
     public String getTaskName() {
-        return "股票行情抓取";
+        return "day quote crawl";
     }
 
     @Override
